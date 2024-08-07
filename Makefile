@@ -6,8 +6,8 @@ TARGET = witsshell
 
 all: $(TARGET)
 
-$(TARGET): witsshell.c
-$(CC) $(SRC_DIR)/witsshell.c $(CFLAGS) -o $(TARGET)
+$(TARGET): $(SRC_DIR)/witsshell.c
+	$(CC) $(SRC_DIR)/witsshell.c $(CFLAGS) -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)
