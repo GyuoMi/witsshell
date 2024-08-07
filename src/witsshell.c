@@ -108,42 +108,73 @@ void exec_cmd(char *args[], const char *output) {
 	dup2(stdout_copy, STDOUT_FILENO);
 	close(stdout_copy);
 }
+// TODO: test11 handle no spaces
+// possible solutions:
+// rewrite parser [ N ] (would need to ignore whitespaces, tokenisation may be difficult)
+// space inserter function [ Y ]
+// check char after, check char before
+// insert space in respective place
+void check_spaces(char *input) {
+	for (int i = 0; input[i] != '\0'; i++){
+		if (input[i] == '>'){
+			if (i > 0 && input[i - 1] != ' '){
+				memmove(input + i + 1, input + i, strlen(input + i) + 1);
+				input[i] = ' ';
+			}
+
+			if (input[i + 1] != ' '){
+				memmove(input + i + 2, input + i + 1, strlen(input + i + 1) + 1);
+				input[i + 1] = ' ';
+			}
+		}
+	}
+}
 
 void parse_cmd(char *input, char *args[], int *arg_n, char **output_file) {
     *arg_n = 0;
     *output_file = NULL;
     char *token = strtok(input, " ");
     bool redir_flag = false;
-    while (token != NULL) {
-            if (strcmp(token, ">") == 0) {
-                //should maybe change so it breaks
-                //also replace stderrs with generic err msg from doc
-                if (redir_flag) {
-                    // "Multiple redirection operators are not allowed\n"
-                    print_error();
-                    return;
-                }
-                redir_flag = true;
+    char *last_token = NULL;
 
-                token = strtok(NULL, " ");
-                if (token == NULL) {
-                    // No output file specified\n
-                    print_error();
-                    return;
-                }
-                if (*output_file != NULL) {
-                    // "Multiple output files are not allowed\n
-                    print_error();
-                    return;
-                }
+    while (token != NULL) {
+        if (strcmp(token, ">") == 0) {
+            if (redir_flag || last_token == NULL) {
+                // Error: Multiple redirections or no command before redirection
+                print_error();
+                *arg_n = 0;
+                return;
+            }
+            redir_flag = true;
+
+            token = strtok(NULL, " ");
+            if (token == NULL) {
+                // Error: No output file specified
+                print_error();
+                *arg_n = 0;
+                return;
+            }
             *output_file = token;
         } else {
+            if (redir_flag) {
+                // Error: Arguments after redirection
+                print_error();
+                *arg_n = 0;
+                return;
+            }
             args[*arg_n] = token;
             (*arg_n)++;
         }
+        last_token = token;
         token = strtok(NULL, " ");
     }
+
     args[*arg_n] = NULL;
+    if (redir_flag && *output_file == NULL) {
+        // Error: No output file specified
+        print_error();
+        *arg_n = 0;
+    }
 }
 
 void exec_parallel_cmd(char *cmd[], int cmd_num){
@@ -234,7 +265,7 @@ int main(int MainArgc, char *MainArgv[]) {
 			break; // eof
 
 		input[strlen(input) - 1] = '\0';
-
+		check_spaces(input);
 		parse_input(input, args, &cmd_num);
 		exec_parallel_cmd(args, cmd_num);
 		// > operator
