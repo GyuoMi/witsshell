@@ -60,6 +60,7 @@ void exec_cmd(char *args[], const char *output) {
 	if (output) {
 		//redirection
 		//file permissions
+		//https://www.geeksforgeeks.org/input-output-system-calls-c-create-open-close-read-write/
 		int fd = open(output, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		if (fd < 0) {
 			//open error
